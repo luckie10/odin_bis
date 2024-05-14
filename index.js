@@ -1,11 +1,14 @@
-const http = require("http");
 const { readFile } = require("node:fs/promises");
 const { resolve } = require("node:path");
+const express = require("express");
+const app = express();
+const port = 5173;
 
-const getHtml = async (name) => {
+const getHtml = async (URLPath) => {
+  const path = URLPath === "/" ? "./index.html" : "." + URLPath + ".html";
+
   try {
-    const filePath = resolve(name);
-    const html = await readFile(filePath, { encoding: "utf8" });
+    const html = await readFile(resolve(path), { encoding: "utf8" });
     return html;
   } catch (error) {
     console.error(error.message);
@@ -13,18 +16,20 @@ const getHtml = async (name) => {
   }
 };
 
-const server = http.createServer(async (req, res) => {
-  const url = req.url === "/" ? "./index.html" : "." + req.url + ".html";
+const handleRequest = async (res, path) => {
   try {
-    const html = await getHtml(url);
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.write(html);
+    const html = await getHtml(path);
+    res.send(html);
   } catch (error) {
-    const html = await getHtml("./404.html");
-    res.writeHead(404, { "Content-Type": "text/html" });
-    res.write(html);
+    const html = await getHtml("/404");
+    res.status(404).send(html);
   }
-  res.end();
+};
+
+app.get("/((index)?(.html)?)?", async (req, res) => {
+  handleRequest(res, "/index");
 });
 
-server.listen(5173);
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
+});
