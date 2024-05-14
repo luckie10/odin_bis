@@ -4,8 +4,15 @@ const express = require("express");
 const app = express();
 const port = 5173;
 
+const resolveFilename = (URLPath) => {
+  if (URLPath.match(/.html$/)) return `.${URLPath}`;
+  if (URLPath === "/") return "./index.html";
+
+  return `.${URLPath}.html`;
+};
+
 const getHtml = async (URLPath) => {
-  const path = URLPath === "/" ? "./index.html" : "." + URLPath + ".html";
+  const path = resolveFilename(URLPath);
 
   try {
     const html = await readFile(resolve(path), { encoding: "utf8" });
@@ -26,7 +33,7 @@ const handleRequest = async (res, path) => {
   }
 };
 
-app.get("/((index)?(.html)?)?", async (req, res) => {
+app.get("*", async (req, res) => {
   handleRequest(res, "/index");
 });
 
